@@ -1,5 +1,7 @@
 FROM php:7.1-apache
 ADD ./docker-php.conf /etc/apache2/conf-enabled/docker-php.conf
+#php.ini-development || php.ini-production
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 RUN apt-get update && apt-get install -y \
         cron \
         libfreetype6-dev \
