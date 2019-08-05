@@ -22,9 +22,20 @@ RUN apt-get update && apt-get install -y \
         && ./configure --enable-soap \
         && make -j "$(nproc)" \
         && make install \
+        && cd ../pdo \
+        && phpize \
+        && ./configure --enable-pdo \
+        && make -j "$(nproc)" \
+        && make install \
+        && cd ../pdo_mysql \
+        && phpize \
+        && ./configure --enable-pdo_mysql \
+        && make -j "$(nproc)" \
+        && make install \
     ) \
     && rm -r php-7.1.30 \
-    && docker-php-ext-enable soap 
+    && pecl install redis-5.0.0 \
+    && docker-php-ext-enable soap pdo pdo_mysql redis
 #更改项目根目录为 /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
