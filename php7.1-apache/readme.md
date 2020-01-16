@@ -78,6 +78,8 @@ RUN apt-get update && apt-get install -y \
         libpng-dev \ #gd
         libxml2 \ #soap
         libxml2-dev \ #soap
+    && docker-php-ext-install -j$(nproc) zip \
+    && docker-php-ext-enable pdo pdo_mysql \
     && docker-php-ext-install -j$(nproc) iconv \
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
     && docker-php-ext-install -j$(nproc) gd \ #安装gd
@@ -92,12 +94,32 @@ RUN apt-get update && apt-get install -y \
         && make -j "$(nproc)" \
         && make install \
     ) \
+    && pecl install redis-5.0.0 \
     && rm -r php-7.1.30 \
-    && docker-php-ext-enable soap #安装soap
+    && docker-php-ext-enable soap redis #安装soap redis
 #更改项目根目录为 /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 #添加定时任务
 RUN echo "* * * * * root php /var/www/html/artisan schedule:run >> /dev/null 2>&1" >> /etc/crontab && cron start
+```
+或者源码安装pdo
+```
+ADD php-7.1.30.tar.gz .
+RUN  ( \
+        cd php-7.1.30/ext/pdo \
+        && phpize \
+        && ./configure --enable-pdo \
+        && make -j "$(nproc)" \
+        && make install \
+        && cd ../pdo_mysql \
+        && phpize \
+        && ./configure --enable-pdo_mysql \
+        && make -j "$(nproc)" \
+        && make install \
+    ) \
+    && rm -r php-7.1.30 \
+    && docker-php-ext-enable pdo pdo_mysql
+
 ```
